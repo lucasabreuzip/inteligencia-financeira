@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql://finance:finance@localhost:5432/finance"
     app_env: str = "dev"
+    api_key: str = "dev-local-key"
 
 
 @lru_cache
