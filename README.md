@@ -10,4 +10,4 @@ Plataforma para análise de dados financeiros a partir de CSVs de transações.
 
 ## Rodando
 
-Em breve...
+Em breve..
