@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    database_url: str = "postgresql://finance:finance@localhost:5432/finance"
+    database_url: str = "postgresql+psycopg://finance:finance@localhost:5432/finance"
     app_env: str = "dev"
     api_key: str = "dev-local-key"
 

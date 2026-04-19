@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from fastapi import FastAPI
+
+from app.api.routers import health
 
 app = FastAPI(title="Inteligência Financeira API")
 
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+app.include_router(health.router)
