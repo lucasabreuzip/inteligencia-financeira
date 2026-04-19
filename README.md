@@ -10,4 +10,9 @@ Plataforma para análise de dados financeiros a partir de CSVs de transações.
 
 ## Rodando
 
-Em breve..
+```bash
+cp .env.example .env
+docker compose up -d db
+```
+
+Banco em `localhost:5432` (user/senha/db: `finance`).
