@@ -50,7 +50,7 @@ export function RevenueChart({ data }: Props) {
         </div>
       </div>
 
-      <div ref={containerRef} className="w-full" style={{ height: CHART_HEIGHT }}>
+      <div ref={containerRef} className="w-full" style={{ height: CHART_HEIGHT, minWidth: 0 }}>
         {!hasData && (
           <div className="flex h-full w-full items-center justify-center text-xs text-black/40">
             Sem dados para exibir.
