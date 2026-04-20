@@ -1,8 +1,8 @@
 <div align="center">
 
-# Plataforma de Inteligência Financeira com (Inteligência Artificial)
+# Plataforma de Inteligência Financeira IA
 
-**Transforme planilhas de transações em decisões estratégicas - com diagnóstico executivo automático e chat inteligente que conversa com seus dados.**
+**Transforme planilhas de transações em decisões estratégicas - diagnóstico executivo automático e chat inteligente que conversa com seus dados.**
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi)](https://fastapi.tiangolo.com)
@@ -13,5 +13,3 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docker.com)
 
 </div>
-
-## backend

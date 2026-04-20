@@ -2,7 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  height: 100%;
+html, body { height: 100%; }
+
+@layer base {
+  body {
+    @apply bg-[#f5f5f7] text-[#1d1d1f] antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  }
+}
+
+/* Scrollbar Apple Style */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
 }
