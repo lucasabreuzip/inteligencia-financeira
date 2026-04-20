@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -103,6 +103,23 @@ export function ClientBehaviorChart({ data }: Props) {
     };
   }, [data]);
 
+  const [width, setWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    const update = () => setWidth(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   if (rows.length === 0) {
     return (
       <div className="rounded-[24px] border border-black/5 bg-white/80 p-6 text-sm text-black/50 shadow-apple backdrop-blur-xl">
@@ -194,9 +211,11 @@ export function ClientBehaviorChart({ data }: Props) {
         </div>
       </div>
 
-      <div style={{ height: chartHeight, minWidth: 0, minHeight: 0 }} className="w-full">
-        <ResponsiveContainer width="100%" height="100%">
+      <div ref={containerRef} style={{ height: chartHeight, minWidth: 0, minHeight: 0 }} className="w-full">
+        {width > 0 && (
           <BarChart
+            width={width}
+            height={chartHeight}
             data={rows}
             layout="vertical"
             margin={{ top: 4, right: 80, left: 8, bottom: 4 }}
@@ -315,7 +334,7 @@ export function ClientBehaviorChart({ data }: Props) {
               />
             </Bar>
           </BarChart>
-        </ResponsiveContainer>
+        )}
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-2 border-t border-black/5 pt-4 text-[12px] md:grid-cols-2">
