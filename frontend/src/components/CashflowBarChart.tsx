@@ -59,7 +59,7 @@ export function CashflowBarChart({ data, height = 180 }: Props) {
   }));
 
   return (
-    <div ref={ref} className="w-full" style={{ height, minWidth: 0 }}>
+    <div ref={ref} className="w-full" style={{ height, minWidth: 0, minHeight: 0 }}>
       {width > 0 && (
         <BarChart
           width={width}

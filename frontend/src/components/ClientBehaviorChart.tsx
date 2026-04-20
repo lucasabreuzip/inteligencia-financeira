@@ -194,8 +194,8 @@ export function ClientBehaviorChart({ data }: Props) {
         </div>
       </div>
 
-      <div style={{ height: chartHeight, minWidth: 0 }} className="w-full">
-        <ResponsiveContainer>
+      <div style={{ height: chartHeight, minWidth: 0, minHeight: 0 }} className="w-full">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={rows}
             layout="vertical"
