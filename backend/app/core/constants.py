@@ -1,14 +1,18 @@
+"""Constantes compartilhadas entre modulos.
+
+Valores que sao invariantes de negocio (nao configuraveis por ambiente) vivem
+aqui; o que varia por deploy fica em `core/config.py` (Settings).
+"""
 from __future__ import annotations
 
-STATUS_PAGO = "pago"
-STATUS_PENDENTE = "pendente"
-STATUS_ATRASADO = "atrasado"
-STATUS_CANCELADO = "cancelado"
+# Agent (chat): loop de tool-calls e timeouts.
+MAX_AGENT_ITERATIONS = 5
+CHAT_TIMEOUT_SEC = 90
 
-STATUS_INADIMPLENCIA: frozenset[str] = frozenset({STATUS_ATRASADO})
+# Historico conversacional. 20 mensagens = ~10 turnos (user+assistant).
+MAX_HISTORY_MESSAGES = 20
+# Cap por mensagem no prompt — evita estourar contexto com turnos gigantes.
+MAX_HISTORY_MSG_CHARS = 4000
 
-STATUS_EM_ABERTO: frozenset[str] = frozenset({STATUS_PENDENTE, STATUS_ATRASADO})
-
-STATUS_VALIDOS: frozenset[str] = frozenset(
-    {STATUS_PAGO, STATUS_PENDENTE, STATUS_ATRASADO, STATUS_CANCELADO}
-)
+# Status que contam como inadimplencia nos agregados financeiros.
+INADIMPLENCIA_STATUSES: frozenset[str] = frozenset({"pendente", "atrasado"})
