@@ -161,8 +161,9 @@ def concentracao_clientes(df: pd.DataFrame) -> dict:
         "maior_cliente": str(por_cliente.index[0]),
     }
 
-    # Clientes ativos no último mês x penúltimo (proxy de churn/retenção)
-def churn_clientes(df: pd.DataFrame) -> dict:
+    # Retenção mês a mês: compara penúltimo vs último mês.
+    # NÃO é churn real — é uma proxy de retenção mensal.
+def retencao_mensal(df: pd.DataFrame) -> dict:
     base = df[df["status"] != "cancelado"].copy()
     if base.empty:
         return {}
@@ -189,19 +190,69 @@ def churn_clientes(df: pd.DataFrame) -> dict:
         "exemplos_perdidos": sorted(perdidos)[:5],
     }
 
-    # Transações cujo valor está acima de z_thresh desvios-padrão da média
+
+    # Churn real: clientes que não transacionaram nos últimos N meses.
+    # Janela padrão: 3 meses (mais robusto que comparação mês a mês).
+def churn_real(df: pd.DataFrame, janela_meses: int = 3) -> dict:
+    base = df[df["status"] != "cancelado"].copy()
+    if base.empty:
+        return {}
+    base["mes"] = base["data"].dt.to_period("M")
+    meses = sorted(base["mes"].unique())
+
+    if len(meses) <= janela_meses:
+        return {}
+
+    meses_historico = meses[:-janela_meses]
+    meses_recentes = meses[-janela_meses:]
+
+    clientes_historico = set(base[base["mes"].isin(meses_historico)]["cliente"].unique())
+    clientes_recentes = set(base[base["mes"].isin(meses_recentes)]["cliente"].unique())
+
+    churned = clientes_historico - clientes_recentes
+    retidos = clientes_historico & clientes_recentes
+
+    return {
+        "janela_meses": janela_meses,
+        "clientes_base": len(clientes_historico),
+        "clientes_retidos": len(retidos),
+        "clientes_churn": len(churned),
+        "taxa_churn": round(_safe_pct(len(churned), len(clientes_historico)), 4),
+        "taxa_retencao": round(_safe_pct(len(retidos), len(clientes_historico)), 4),
+        "exemplos_churn": sorted(churned)[:5],
+    }
+
+    # Transações cujo valor está acima de z_thresh desvios-padrão da média.
+    # Para amostras pequenas (< 15), usa IQR (mais robusto que z-score).
 def outliers_transacoes(df: pd.DataFrame, z_thresh: float = 3.0) -> list[dict]:
     base = df[df["status"] != "cancelado"]
-    if len(base) < 30:
+    if len(base) < 5:
         return []
+
     valores = base["valor"]
-    mu = float(valores.mean())
-    sigma = float(valores.std(ddof=0))
-    if sigma == 0:
-        return []
-    z = (valores - mu) / sigma
-    out = base.assign(z=z)
-    out = out[out["z"].abs() >= z_thresh].sort_values("z", ascending=False).head(5)
+
+    if len(base) >= 15:
+        # Z-score para amostras maiores
+        mu = float(valores.mean())
+        sigma = float(valores.std(ddof=0))
+        if sigma == 0:
+            return []
+        z = (valores - mu) / sigma
+        out = base.assign(z=z)
+        out = out[out["z"].abs() >= z_thresh].sort_values("z", ascending=False).head(5)
+    else:
+        # IQR para amostras pequenas (não assume normalidade)
+        q1 = float(valores.quantile(0.25))
+        q3 = float(valores.quantile(0.75))
+        iqr = q3 - q1
+        if iqr == 0:
+            return []
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+        mask = (base["valor"] < lower) | (base["valor"] > upper)
+        out = base[mask].sort_values("valor", ascending=False).head(5)
+        out = out.assign(z=0.0)  # z-score não aplica no método IQR
+
     result = out[["id", "cliente", "valor", "data", "z", "status"]].copy()
     result["id"] = result["id"].astype(str)
     result["cliente"] = result["cliente"].astype(str)
@@ -213,18 +264,41 @@ def outliers_transacoes(df: pd.DataFrame, z_thresh: float = 3.0) -> list[dict]:
     result["status"] = result["status"].astype(str)
     return result[["id", "cliente", "valor", "data", "z_score", "status"]].to_dict(orient="records")
 
-    # Days Sales Outstanding aproximado: idade média das transações pendentes/atrasadas
-def dso_pendentes(df: pd.DataFrame, ref_date: datetime | None = None) -> dict:
+    # Idade média dos recebíveis pendentes/atrasadas (NÃO é DSO contábil tradicional)
+def idade_media_recebiveis(df: pd.DataFrame, ref_date: datetime | None = None) -> dict:
     base = df[df["status"].isin(INADIMPLENCIA_STATUSES)]
     if base.empty:
-        return {"qtd": 0, "dso_dias": 0, "valor_total": 0.0}
+        return {"qtd": 0, "idade_media_dias": 0, "idade_maxima_dias": 0, "valor_total": 0.0}
     ref = pd.Timestamp(ref_date) if ref_date else df["data"].max()
     idade = (ref - base["data"]).dt.days
     return {
         "qtd": int(len(base)),
-        "dso_dias": int(idade.mean()),
-        "dso_maximo_dias": int(idade.max()),
+        "idade_media_dias": int(idade.mean()),
+        "idade_maxima_dias": int(idade.max()),
         "valor_total": round(float(base["valor"].sum()), 2),
+    }
+
+
+    # DSO tradicional: quantos dias a empresa leva para receber, em média.
+    # Fórmula: (Recebíveis / Receita Total do Período) * Dias do Período
+def dso_tradicional(df: pd.DataFrame) -> dict:
+    pagos = df[df["status"] == "pago"]
+    inadimplentes = df[df["status"].isin(INADIMPLENCIA_STATUSES)]
+
+    receita_total = float(pagos["valor"].sum())
+    recebiveis = float(inadimplentes["valor"].sum())
+
+    if df.empty:
+        return {"dso_dias": 0, "recebiveis": 0.0, "receita_total": 0.0, "dias_periodo": 0}
+
+    dias_periodo = max((df["data"].max() - df["data"].min()).days, 1)
+    dso = (recebiveis / receita_total) * dias_periodo if receita_total > 0 else 0.0
+
+    return {
+        "dso_dias": round(dso, 1),
+        "recebiveis": round(recebiveis, 2),
+        "receita_total": round(receita_total, 2),
+        "dias_periodo": dias_periodo,
     }
 
     # Perfil comportamental por cliente - volume total, realizado, pontualidade, recência.
@@ -284,8 +358,10 @@ def build_advanced_metrics(df: pd.DataFrame) -> dict:
         "inadimplencia_por_cliente_top5": inadimplencia_por_cliente(df, top=5),
         "inadimplencia_por_categoria": inadimplencia_por_categoria(df),
         "concentracao_clientes": concentracao_clientes(df),
-        "churn_retencao": churn_clientes(df),
+        "retencao_mensal": retencao_mensal(df),           # proxy mês a mês
+        "churn_real": churn_real(df, janela_meses=3),     # churn com janela deslizante
         "outliers_valor": outliers_transacoes(df),
-        "dso_pendentes": dso_pendentes(df),
+        "idade_media_recebiveis": idade_media_recebiveis(df),  # antigo dso_pendentes
+        "dso_tradicional": dso_tradicional(df),               # DSO contábil real
         "comportamento_clientes": comportamento_clientes(df),
     }

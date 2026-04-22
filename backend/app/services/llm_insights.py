@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = (
     "Você é um 'CFO as a Service' de Elite analisando os resultados de uma empresa. "
     "Você receberá um PAYLOAD JSON com KPIs básicos e um bloco `metricas_avancadas` "
-    "(fluxo_caixa, inadimplencia, HHI, DSO, churn, outliers, etc).\n\n"
+    "(fluxo_caixa, inadimplencia, HHI, DSO tradicional, idade média dos recebíveis, "
+    "retenção mensal, churn real, outliers, comportamento de clientes, etc).\n\n"
     "Sua missão é gerar um diagnóstico executivo de excelência corporativa. "
     "Responda ESTRITAMENTE em JSON no schema:\n"
     "{\n"
