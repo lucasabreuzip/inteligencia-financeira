@@ -79,7 +79,7 @@ O diferencial da plataforma. O usuário pergunta em português e o agente decide
 
 ## Arquitetura
 
-<img width="1370" height="827" alt="arquitetura_lucasabreu" src="https://github.com/user-attachments/assets/b468eb68-de59-46e8-a088-529bc2e97864" />
+<img width="1370" height="827" alt="arquitetura_lucasabreu" src="https://media.discordapp.net/attachments/1495950483179966495/1496347604701810839/ArqLucas.png?ex=69e98dcd&is=69e83c4d&hm=eab15b64aecc639a1c473a975199c9afde0992d7d96a76d80c2acf9048e53310&=&format=webp&quality=lossless&width=1844&height=864" />
 
 ---
 
